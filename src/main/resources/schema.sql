@@ -1,0 +1,8 @@
+DROP TABLE IF EXISTS 고객;
+
+CREATE TABLE 고객 (
+    고객번호 BIGINT PRIMARY KEY,
+    고객명 VARCHAR(100) NOT NULL,
+    생년월일 DATE,
+    사용여부 BOOLEAN
+);
