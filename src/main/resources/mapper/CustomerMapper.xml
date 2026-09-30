@@ -8,7 +8,7 @@
     <select id="findById"
             resultType="com.example.demo.customer.dto.CustomerDto">
         SELECT
-            고객번호,
+            고객번호 as customerId,
             고객명,
             생년월일,
             사용여부
@@ -23,6 +23,58 @@
             고객명,
             생년월일,
             사용여부
+        FROM 고객
+        ORDER BY 고객번호
+    </select>
+
+    <!-- 예제 2: resultMap으로 한글 컬럼 ↔ 영문 필드를 매핑 -->
+    <resultMap id="customerResultMap"
+               type="com.example.demo.customer.dto.CustomerResultMapDto">
+        <id column="고객번호" property="customerId"/>
+        <result column="고객명" property="customerName"/>
+        <result column="생년월일" property="birthDate"/>
+        <result column="사용여부" property="enabled"/>
+    </resultMap>
+
+    <select id="findByIdUsingResultMap" resultMap="customerResultMap">
+        SELECT
+            고객번호,
+            고객명,
+            생년월일,
+            사용여부
+        FROM 고객
+        WHERE 고객번호 = #{customerId}
+    </select>
+
+    <select id="findAllUsingResultMap" resultMap="customerResultMap">
+        SELECT
+            고객번호,
+            고객명,
+            생년월일,
+            사용여부
+        FROM 고객
+        ORDER BY 고객번호
+    </select>
+
+    <!-- 예제 3: SQL AS 별칭으로 한글 컬럼 ↔ 영문 필드를 매핑 -->
+    <select id="findByIdUsingAlias"
+            resultType="com.example.demo.customer.dto.CustomerAliasDto">
+        SELECT
+            고객번호 AS customerId,
+            고객명 AS customerName,
+            생년월일 AS birthDate,
+            사용여부 AS enabled
+        FROM 고객
+        WHERE 고객번호 = #{customerId}
+    </select>
+
+    <select id="findAllUsingAlias"
+            resultType="com.example.demo.customer.dto.CustomerAliasDto">
+        SELECT
+            고객번호 AS customerId,
+            고객명 AS customerName,
+            생년월일 AS birthDate,
+            사용여부 AS enabled
         FROM 고객
         ORDER BY 고객번호
     </select>

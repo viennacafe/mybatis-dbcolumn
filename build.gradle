@@ -28,6 +28,8 @@ dependencies {
     implementation "org.mybatis.spring.boot:mybatis-spring-boot-starter:${mybatisSpringBootVersion}"
 
     runtimeOnly "com.h2database:h2:${h2Version}"
+    // Spring Boot 4부터 H2 콘솔 자동설정이 별도 모듈로 분리되어 명시적으로 추가해야 함
+    runtimeOnly 'org.springframework.boot:spring-boot-h2console'
 
     compileOnly "org.projectlombok:lombok:${lombokVersion}"
     annotationProcessor "org.projectlombok:lombok:${lombokVersion}"

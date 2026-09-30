@@ -67,15 +67,30 @@ gradlew.bat bootRun
 
 ## API 확인
 
-```bash
-curl http://localhost:8080/customers
-```
+같은 데이터를 세 가지 매핑 방식으로 각각 조회할 수 있습니다.
+
+### 1) `@DbColumn` + 커스텀 ObjectWrapperFactory
 
 ```bash
+curl http://localhost:8080/customers
 curl http://localhost:8080/customers/1001
 ```
 
-예상 결과:
+### 2) MyBatis `resultMap`
+
+```bash
+curl http://localhost:8080/customers/resultmap
+curl http://localhost:8080/customers/resultmap/1001
+```
+
+### 3) SQL `AS` 별칭
+
+```bash
+curl http://localhost:8080/customers/alias
+curl http://localhost:8080/customers/alias/1001
+```
+
+세 API 모두 예상 결과는 동일합니다:
 
 ```json
 {
@@ -85,6 +100,25 @@ curl http://localhost:8080/customers/1001
   "enabled": true
 }
 ```
+
+## H2 콘솔
+
+브라우저에서 데이터를 직접 확인하고 싶다면 `application.yml`의
+`spring.h2.console.enabled: true` 설정으로 H2 웹 콘솔을 켤 수 있습니다.
+
+```
+http://localhost:8080/h2-console
+```
+
+| 항목 | 값 |
+|---|---|
+| JDBC URL | `jdbc:h2:mem:testdb;MODE=DB2;DEFAULT_NULL_ORDERING=HIGH;DB_CLOSE_DELAY=-1` |
+| User Name | `sa` |
+| Password | (공백) |
+
+> Spring Boot 4부터 H2 콘솔 자동설정이 `spring-boot-h2console` 모듈로 분리되어,
+> `build.gradle`에 `runtimeOnly 'org.springframework.boot:spring-boot-h2console'`를
+> 별도로 추가해야 콘솔이 동작합니다.
 
 ## 프로젝트 구조
 
@@ -128,3 +162,13 @@ Java property "customerId"
       ↓
 CustomerDto.setCustomerId(...)
 ```
+
+## 매핑 방식 비교
+
+| 방식 | DTO | 매핑 위치 | 비고 |
+|---|---|---|---|
+| `@DbColumn` + 커스텀 ObjectWrapperFactory | `CustomerDto` | 애노테이션 (Java) | 이 프로젝트의 핵심 예제. SQL/XML은 alias 없이 그대로 유지 |
+| `resultMap` | `CustomerResultMapDto` | `CustomerMapper.xml`의 `<resultMap>` (XML) | MyBatis 표준 방식. 컬럼-필드 매핑이 XML에 명시적으로 드러남 |
+| SQL `AS` 별칭 | `CustomerAliasDto` | SQL문 자체 (XML) | 매핑 규칙이 SQL 안에 있어 가장 직관적이지만, 쿼리마다 별칭을 반복해야 함 |
+
+
