@@ -1,0 +1,51 @@
+// 사내 Nexus(Maven 리포지토리)로 배포하기 위한 공통 설정.
+// java-library/java 플러그인이 적용된 모듈에서
+//   apply from: "${rootDir}/gradle/publishing.gradle"
+// 로 가져다 씁니다.
+
+apply plugin: 'maven-publish'
+
+java {
+    withJavadocJar()
+    withSourcesJar()
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+
+            pom {
+                // 사내 배포용 메타데이터. 필요에 맞게 수정하세요.
+                name = project.name
+                description = project.description ?: project.name
+            }
+        }
+    }
+
+    repositories {
+        // Nexus는 보통 release/snapshot 리포지토리를 분리해서 운영합니다.
+        // 버전이 -SNAPSHOT으로 끝나면 snapshot 저장소로, 아니면 release 저장소로 보냅니다.
+        def releasesUrl = project.findProperty('nexusReleasesUrl')
+                ?: System.getenv('NEXUS_RELEASES_URL')
+        def snapshotsUrl = project.findProperty('nexusSnapshotsUrl')
+                ?: System.getenv('NEXUS_SNAPSHOTS_URL')
+        def targetUrl = version.toString().endsWith('-SNAPSHOT') ? snapshotsUrl : releasesUrl
+
+        // URL이 설정되지 않았으면(로컬 빌드, CI 설정 전 등) nexus 저장소 등록 자체를 건너뜁니다.
+        // 그래도 publishToMavenLocal 등 다른 publish 태스크는 평소대로 동작합니다.
+        if (targetUrl) {
+            maven {
+                name = 'nexus'
+                url = uri(targetUrl)
+
+                credentials {
+                    username = project.findProperty('nexusUsername')
+                            ?: System.getenv('NEXUS_USERNAME')
+                    password = project.findProperty('nexusPassword')
+                            ?: System.getenv('NEXUS_PASSWORD')
+                }
+            }
+        }
+    }
+}

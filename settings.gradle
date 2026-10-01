@@ -1,5 +1,5 @@
-rootProject.name = 'dbcolumn-mybatis-gradle-demo'
+rootProject.name = 'mybatis-dbcolumn'
 
-include 'dbcolumn-mybatis-core'
-include 'dbcolumn-mybatis-spring-boot-starter'
+include 'mybatis-dbcolumn-core'
+include 'mybatis-dbcolumn-spring-boot-starter'
 include 'app'

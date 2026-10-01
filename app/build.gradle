@@ -14,7 +14,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
 
     // @DbColumn + MyBatis 자동 매핑 기능 전체 (MyBatis Spring Boot 연동 포함)
-    implementation project(':dbcolumn-mybatis-spring-boot-starter')
+    implementation project(':mybatis-dbcolumn-spring-boot-starter')
 
     runtimeOnly "com.h2database:h2:${h2Version}"
     // Spring Boot 4부터 H2 콘솔 자동설정이 별도 모듈로 분리되어 명시적으로 추가해야 함

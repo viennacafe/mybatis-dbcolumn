@@ -1,11 +1,11 @@
-# @DbColumn + MyBatis ObjectWrapperFactory - Gradle Demo
+# @DbColumn + MyBatis ObjectWrapperFactory
 
 Spring Boot + MyBatis에서 DB의 한글 컬럼명을 Java의 영어 필드명으로
 자동 매핑하는 예제입니다.
 
 `@DbColumn` 매핑 기능 자체는 Spring Boot 애플리케이션(`app`)과 분리된
-재사용 가능한 라이브러리(`dbcolumn-mybatis-core` /
-`dbcolumn-mybatis-spring-boot-starter`)로 모듈화되어 있습니다.
+재사용 가능한 라이브러리(`mybatis-dbcolumn-core` /
+`mybatis-dbcolumn-spring-boot-starter`)로 모듈화되어 있습니다.
 자세한 내용은 [모듈 구성](#모듈-구성)을 참고하세요.
 
 ## 기술 구성
@@ -20,7 +20,7 @@ Spring Boot + MyBatis에서 DB의 한글 컬럼명을 Java의 영어 필드명�
 ## 핵심 DTO
 
 ```java
-import com.example.dbcolumn.mybatis.annotation.DbColumn;
+import com.vienna.mybatis.dbcolumn.annotation.DbColumn;
 
 @Getter
 @Setter
@@ -38,7 +38,7 @@ Mapper XML은 `resultMap`이나 SQL alias 없이 일반 `resultType`을 사용�
 
 ```xml
 <select id="findById"
-        resultType="com.example.demo.customer.dto.CustomerDto">
+        resultType="com.vienna.demo.customer.dto.CustomerDto">
     SELECT
         고객번호,
         고객명,
@@ -140,16 +140,86 @@ http://localhost:8080/h2-console
 
 | 모듈 | 역할 | Spring 의존 여부 |
 |---|---|---|
-| `dbcolumn-mybatis-core` | `@DbColumn`, `DbColumnMetadataCache`, `DbColumnObjectWrapperFactory`, `DbColumnBeanWrapper`. 순수 MyBatis 확장(`ObjectWrapperFactory`)만 포함 | 없음 (MyBatis만 의존) |
-| `dbcolumn-mybatis-spring-boot-starter` | `DbColumnAutoConfiguration`으로 core를 Spring Boot에 자동 연결. 이 의존성 하나만 추가하면 `mybatis-spring-boot-starter`까지 함께 따라옴 | Spring Boot 자동설정 |
+| `mybatis-dbcolumn-core` | `@DbColumn`, `DbColumnMetadataCache`, `DbColumnObjectWrapperFactory`, `DbColumnBeanWrapper`. 순수 MyBatis 확장(`ObjectWrapperFactory`)만 포함 | 없음 (MyBatis만 의존) |
+| `mybatis-dbcolumn-spring-boot-starter` | `DbColumnAutoConfiguration`으로 core를 Spring Boot에 자동 연결. 이 의존성 하나만 추가하면 `mybatis-spring-boot-starter`까지 함께 따라옴 | Spring Boot 자동설정 |
 | `app` | 위 스타터를 사용하는 데모 Spring Boot 애플리케이션. Controller/Service/Mapper/DTO 등 예제 코드 | Spring Boot 애플리케이션 |
 
 이전에는 `app`에 `MyBatisConfig`라는 `@Configuration` 클래스를 직접 만들어
 `DbColumnObjectWrapperFactory` 빈을 수동으로 등록해야 했지만, 라이브러리로
-분리한 뒤에는 `dbcolumn-mybatis-spring-boot-starter`의
+분리한 뒤에는 `mybatis-dbcolumn-spring-boot-starter`의
 `META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports`
 에 등록된 `DbColumnAutoConfiguration`이 이를 자동으로 처리합니다. 그래서
 `app` 모듈에는 더 이상 MyBatis 관련 설정 클래스가 없습니다.
+
+## 사내 Nexus(Maven)에 배포하기
+
+`mybatis-dbcolumn-core`와 `mybatis-dbcolumn-spring-boot-starter`에는
+[gradle/publishing.gradle](gradle/publishing.gradle) 공통 스크립트를 통해
+`maven-publish` 설정이 이미 되어 있습니다(`app`은 라이브러리가 아니라
+실행용 애플리케이션이라 배포 대상에서 제외했습니다). jar와 함께
+sources/javadoc jar도 자동으로 생성됩니다.
+
+### 1) 접속 정보 설정
+
+Nexus 주소와 인증 정보를 **프로젝트 파일이 아니라** 사용자 홈의
+`~/.gradle/gradle.properties`에 적어두세요. 이 파일은 git으로 관리되지
+않으므로 credential이 저장소에 올라갈 위험이 없습니다.
+
+```properties
+# ~/.gradle/gradle.properties (git에 포함되지 않음)
+nexusReleasesUrl=https://nexus.company.com/repository/maven-releases/
+nexusSnapshotsUrl=https://nexus.company.com/repository/maven-snapshots/
+nexusUsername=deploy-user
+nexusPassword=********
+```
+
+CI 환경이라면 같은 이름의 환경변수(`NEXUS_RELEASES_URL`,
+`NEXUS_SNAPSHOTS_URL`, `NEXUS_USERNAME`, `NEXUS_PASSWORD`)로 대체할 수
+있습니다. Nexus가 release/snapshot 저장소를 따로 두지 않고 리포지토리
+하나만 쓴다면 두 URL을 동일하게 맞추면 됩니다.
+
+현재 버전(`0.0.1-SNAPSHOT`)은 `-SNAPSHOT`으로 끝나므로 자동으로
+`nexusSnapshotsUrl`로 배포됩니다. 정식 릴리스를 배포하려면
+[build.gradle](build.gradle)의 `version` 값에서 `-SNAPSHOT`을 떼면
+`nexusReleasesUrl`로 전환됩니다.
+
+접속 정보가 비어 있으면 `nexus` 저장소 등록 자체를 건너뛰도록
+방어 코드가 들어 있어서, 설정 전에도 `./gradlew build`나
+`publishToMavenLocal`은 평소대로 동작합니다.
+
+### 2) 배포 실행
+
+```bash
+# 로컬 ~/.m2에 먼저 테스트 삼아 배포
+./gradlew publishToMavenLocal
+
+# 실제 사내 Nexus로 배포 (두 라이브러리 모듈 전체)
+./gradlew publish
+
+# 특정 모듈만 배포하고 싶다면
+./gradlew :mybatis-dbcolumn-core:publish
+./gradlew :mybatis-dbcolumn-spring-boot-starter:publish
+```
+
+### 3) 사용하는 쪽 설정
+
+소비 프로젝트의 `settings.gradle` 또는 `build.gradle`
+`repositories {}`에 같은 Nexus 주소를 추가하면 일반 의존성처럼 받아
+쓸 수 있습니다.
+
+```gradle
+repositories {
+    mavenCentral()
+    maven { url = uri("https://nexus.company.com/repository/maven-public/") }
+}
+
+dependencies {
+    implementation "com.vienna:mybatis-dbcolumn-spring-boot-starter:0.0.1-SNAPSHOT"
+}
+```
+
+> 현재 `group`은 `com.vienna`입니다. 조직에서 별도의 group ID 규칙을
+> 쓰고 있다면 실제 배포 전에 그에 맞게 바꾸세요.
 
 ## 프로젝트 구조
 
@@ -160,19 +230,19 @@ http://localhost:8080/h2-console
 ├── gradlew / gradlew.bat
 ├── gradle/wrapper/
 │
-├── dbcolumn-mybatis-core/         # 순수 MyBatis 확장 라이브러리
+├── mybatis-dbcolumn-core/         # 순수 MyBatis 확장 라이브러리
 │   ├── build.gradle
-│   └── src/main/java/com/example/dbcolumn/mybatis/
+│   └── src/main/java/com/vienna/mybatis/dbcolumn/
 │       ├── annotation/DbColumn.java
 │       ├── mapping/DbColumnMetadataCache.java
 │       └── wrapper/
 │           ├── DbColumnObjectWrapperFactory.java
 │           └── DbColumnBeanWrapper.java
 │
-├── dbcolumn-mybatis-spring-boot-starter/   # Spring Boot 자동설정
+├── mybatis-dbcolumn-spring-boot-starter/   # Spring Boot 자동설정
 │   ├── build.gradle
 │   └── src/main/
-│       ├── java/com/example/dbcolumn/mybatis/autoconfigure/
+│       ├── java/com/vienna/mybatis/dbcolumn/autoconfigure/
 │       │   └── DbColumnAutoConfiguration.java
 │       └── resources/META-INF/spring/
 │           └── org.springframework.boot.autoconfigure.AutoConfiguration.imports
@@ -181,7 +251,7 @@ http://localhost:8080/h2-console
     ├── build.gradle
     └── src/
         ├── main/
-        │   ├── java/com/example/demo/
+        │   ├── java/com/vienna/demo/
         │   │   ├── DbColumnMybatisDemoApplication.java
         │   │   └── customer/
         │   └── resources/
@@ -189,7 +259,7 @@ http://localhost:8080/h2-console
         │       ├── application.yml
         │       ├── schema.sql
         │       └── data.sql
-        └── test/java/com/example/demo/customer/mapper/
+        └── test/java/com/vienna/demo/customer/mapper/
 ```
 
 ## 매핑 흐름
