@@ -203,7 +203,7 @@ CI 환경이라면 같은 이름의 환경변수(`NEXUS_RELEASES_URL`,
 
 ### 3) 사용하는 쪽 설정
 
-소비 프로젝트의 `settings.gradle` 또는 `build.gradle`
+프로젝트의 `settings.gradle` 또는 `build.gradle`
 `repositories {}`에 같은 Nexus 주소를 추가하면 일반 의존성처럼 받아
 쓸 수 있습니다.
 
@@ -218,8 +218,34 @@ dependencies {
 }
 ```
 
-> 현재 `group`은 `com.vienna`입니다. 조직에서 별도의 group ID 규칙을
-> 쓰고 있다면 실제 배포 전에 그에 맞게 바꾸세요.
+> 현재 `group`은 `com.vienna`입니다.
+
+## JitPack 배포
+
+GitHub 저장소에 코드를 push하고 Release를 만들면 JitPack이 빌드와 배포를
+처리합니다. 별도의 `publish` 명령이나 Nexus 계정은 필요하지 않습니다.
+루트 `jitpack.yml`은 이 프로젝트의 Java 25 빌드 환경을 준비하고,
+JitPack 빌드에서는 GitHub 소유자/저장소/태그를 Maven 좌표에 사용합니다.
+일반 로컬 빌드와 Nexus 배포 좌표(`com.vienna`)에는 영향이 없습니다.
+
+예를 들어 GitHub 저장소가
+`https://github.com/<소유자>/mybatis-dbcolumn`이고 태그가 `v0.0.1`이면,
+JitPack에서 저장소를 조회해 해당 버전을 빌드합니다. 사용하는 프로젝트에는
+다음을 추가합니다.
+
+```gradle
+repositories {
+    mavenCentral()
+    maven { url = uri("https://jitpack.io") }
+}
+
+dependencies {
+    implementation "com.github.viennacafe.mybatis-dbcolumn:mybatis-dbcolumn-spring-boot-starter:v0.0.1"
+}
+```
+
+`<소유자>`는 GitHub 사용자명 또는 조직명입니다. starter가 core 모듈을
+전이 의존성으로 포함하므로 보통 starter 하나만 선언하면 됩니다.
 
 ## 프로젝트 구조
 

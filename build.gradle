@@ -3,9 +3,18 @@ plugins {
     id 'io.spring.dependency-management' version '1.1.7' apply false
 }
 
+def isJitPack = System.getenv('JITPACK') == 'true'
+def jitpackOwnerGroup = System.getenv('GROUP')
+def jitpackRepository = System.getenv('ARTIFACT')
+def jitpackVersion = System.getenv('VERSION')
+
+if (isJitPack && (!jitpackOwnerGroup || !jitpackRepository || !jitpackVersion)) {
+    throw new GradleException('JitPack must provide GROUP, ARTIFACT, and VERSION.')
+}
+
 allprojects {
-    group = 'com.vienna'
-    version = '0.0.1-SNAPSHOT'
+    group = isJitPack ? "${jitpackOwnerGroup}.${jitpackRepository}" : 'com.vienna'
+    version = isJitPack ? jitpackVersion : '0.0.1-SNAPSHOT'
 
     repositories {
         mavenCentral()
