@@ -1,6 +1,6 @@
-package com.example.demo.mybatis.mapping;
+package com.example.dbcolumn.mybatis.mapping;
 
-import com.example.demo.mybatis.annotation.DbColumn;
+import com.example.dbcolumn.mybatis.annotation.DbColumn;
 
 import java.lang.reflect.Field;
 import java.util.Collections;
@@ -8,6 +8,11 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * 클래스별 {@code @DbColumn} 매핑 정보(컬럼명 → 필드명)를 리플렉션으로
+ * 한 번만 계산해 캐싱합니다. 클래스가 처음 조회될 때만 필드를 스캔하고,
+ * 이후에는 캐시된 불변 맵을 반환합니다.
+ */
 public final class DbColumnMetadataCache {
 
     private static final Map<Class<?>, Map<String, String>> CACHE =
@@ -22,6 +27,10 @@ public final class DbColumnMetadataCache {
 
     public static boolean hasDbColumn(Class<?> type) {
         return !getMapping(type).isEmpty();
+    }
+
+    public static String findProperty(Class<?> type, String columnName) {
+        return getMapping(type).get(columnName);
     }
 
     private static Map<String, String> createMapping(Class<?> type) {

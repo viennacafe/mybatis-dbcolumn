@@ -1,0 +1,32 @@
+plugins {
+    id 'org.springframework.boot'
+    id 'io.spring.dependency-management'
+}
+
+description = '@DbColumn 매핑 예제를 보여주는 Spring Boot 데모 애플리케이션입니다.'
+
+ext {
+    set('h2Version', "2.5.252")
+    set('lombokVersion', "1.18.48")
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+
+    // @DbColumn + MyBatis 자동 매핑 기능 전체 (MyBatis Spring Boot 연동 포함)
+    implementation project(':dbcolumn-mybatis-spring-boot-starter')
+
+    runtimeOnly "com.h2database:h2:${h2Version}"
+    // Spring Boot 4부터 H2 콘솔 자동설정이 별도 모듈로 분리되어 명시적으로 추가해야 함
+    runtimeOnly 'org.springframework.boot:spring-boot-h2console'
+
+    compileOnly "org.projectlombok:lombok:${lombokVersion}"
+    annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}

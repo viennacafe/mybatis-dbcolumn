@@ -1,6 +1,6 @@
 package com.example.demo.customer.dto;
 
-import com.example.demo.mybatis.annotation.DbColumn;
+import com.example.dbcolumn.mybatis.annotation.DbColumn;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
